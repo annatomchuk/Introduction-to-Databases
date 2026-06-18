@@ -90,6 +90,6 @@ join Patients p on a.PatientID=p.PatientID --об'єдную пацієнтів 
 join Doctors d on a.DoctorID=d.DoctorID
 join Diagnosis ds on a.DiagnosID=ds.DiagnosID
 join filteredProcedure f on a.AppointmentID =f.AppointmentID --CTE об'єдную з таблицею Appointment--
-where a.Date>='2026-06-01' --фільтрую по даті, все що було після 01.06--
+where f.PriceCategory='expensive procedure' --фільтрую по вартості процедури, щоб вивело лише дорогі--
 group by p.PatientName, d.DoctorName, ds.Diagnos, f.PriceCategory
 order by "Total price" desc; --сортування по total price у спаданні--
