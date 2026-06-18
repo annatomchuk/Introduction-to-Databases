@@ -30,42 +30,58 @@ create table Procedure(
     Room int,
     Price int
 );
-insert into Patients (PatientID, PatientName, MedicalNotes, Phone) values --наповнюю даними--
-(1111, 'Olha Mork', 'Need to visit Main doctor', '380 986 234 103'),
-(2222, 'Dmytro Bevz', 'Need to visit Therapist', '380 978 234 983'),
-(3333, 'Kateryna Zelena', 'Need to visit Cardiolog', '380 999 544 244'),
-(4444, 'Maria Chorna', 'Need to visit Okylist', '380 945 567 133'),
-(5555, 'Oleh Wers', 'Need to visit Pscychology', '380 999 894 324');
+insert into Patients (PatientID, PatientName, MedicalNotes, Phone)
+select
+    id,
+    'Patient Name ' || id as PatientName,
+    'Need to check medical records ' || id as MedicalNotes,
+    '+38097' || (1000000 + id) as Phone
+from generate_series(1, 500) as id;
 
-insert into Doctors (DoctorID, DoctorName, Phone, Room, Speciality) values
-(0001, 'Anna', '380 986 234 103', 111,'Main Doctor'),
-(0002, 'Ostap', '380 926 275 123', 123,'Pscychology'),
-(0003, 'Stepan', '380 906 232 109', 321,'Cardiolog'),
-(0004, 'Kyrylo', '380 988 999 803', 212,'Okylist'),
-(0005, 'Demian', '380 996 323 563', 108,'Therapist');
+insert into Doctors (DoctorID, DoctorName, Phone, Room, Speciality)
+select
+    id,
+    'Doctor Name ' || id as DoctorName,
+    '+38050' || (2000000 + id) as Phone,
+    (100 + (id % 400)) as Room,
+    (array[
+        'Therapist', 'Cardiolog', 'Okylist', 'Psychology', 'Surgeon',
+        'Neurologist', 'Dermatologist', 'Pediatrician', 'Traumatologist', 'Gastroenterologist'
+    ])[1 + (id % 10)] as Speciality
+from generate_series(1, 100) as id;
 
 insert into Diagnosis (DiagnosID, Diagnos, Description) values
-(1000, 'Heachache', 'Pain in a head'),
-(2000, 'Heart', 'Arytmia'),
-(3000, 'Epilepsia', 'Nerves'),
-(4000, 'Chuma', 'Infection'),
-(5000, 'Covid', 'Virus');
+(1000, 'Heachache', 'Acute pain in the frontal lobe of the head'),
+(2000, 'Heart Arytmia', 'Irregular heart rhythm detected during ECG'),
+(3000, 'Epilepsia', 'Central nervous system neurological disorder'),
+(4000, 'Chuma Disease', 'Rare dangerous bacterial infectious disease'),
+(5000, 'Covid-19', 'Acute respiratory viral infection (SARS-CoV-2)'),
+(6000, 'Gastritis', 'Inflammation of the protective lining of the stomach'),
+(7000, 'Allergy', 'Hypersensitivity of the immune system to environmental factors'),
+(8000, 'Bronchitis', 'Inflammation of the lining of bronchial tubes'),
+(9000, 'Scoliosis', 'Sideways curvature of the spine'),
+(10000, 'Dermatitis', 'Common skin irritation and inflammation condition');
 
-insert into Appointments (AppointmentID, PatientID, DoctorID, DiagnosID, Date) values
-(1, 1111, 5, 5000,'2026-06-21'),
-(2, 5555, 2,3000,'2026-06-30'),
-(3, 2222, 1,1000,'2026-06-11'),
-(4, 4444, 3,2000,'2026-07-01'),
-(5, 3333, 4,4000,'2026-06-28'),
-(6, 4444, 5,1000,'2026-08-01');
+insert into Appointments (AppointmentID, PatientID, DoctorID, DiagnosID, Date)
+select
+    id,
+    (1 + (id % 500)) as PatientID,
+    (1 + (id % 100)) as DoctorID,
+    (1000 + ((id % 10) * 1000)) as DiagnosID,
+    ('2026-01-01'::date + (id % 200) * '1 day'::interval)::date as Date
+from generate_series(1, 10000) as id;
 
-insert into Procedure(ProcedureID, Description, AppointmentID, Room,Price) values
-(1001, 'Therapia', 1,321,250),
-(2001, 'Psychological test',2, 123,500),
-(3001, 'General checking',3, 123,1200),
-(4001, 'Cardio check',4, 212,450),
-(5001, 'Checking',5, 108,300),
-(6001, 'Massage',6, 108,1300);
+insert into Procedure (ProcedureID, AppointmentID, Description, Room, Price)
+select
+    id,
+    id as AppointmentID,
+    (ARRAY[
+        'Therapia session', 'Psychological test', 'General body checking', 'Cardio check', 'Massage',
+        'Blood test analyses', 'X-Ray screening', 'MRI Scan', 'Ultrasound scan', 'Endoscopy exam'
+    ])[1 + (id % 10)] as Description,
+    (100 + (id % 300)) as Room,
+    (100 + (id % 1500)) as Price
+from generate_series(1, 10000) as id;
 
 with filteredProcedure as ( --створюю CTE--
 select
