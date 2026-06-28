@@ -96,3 +96,63 @@ begin
 	end if;
 end;
 $$;
+
+create or replace function triger_4()
+returns trigger as $$
+declare
+	tr_order_id int;
+begin
+	if tg_option='DELETE' then
+		tr_order_id:=old.order_id;
+	else
+		tr_order_id:=new.order_id;
+	end if;
+	update orders
+	set total_amount=calculate_order_total(tr_order_id)
+	where order_id=tr_order_id;
+	return null;
+end;
+$$ language plpgsql;
+create trigger triger_4
+after insert or update or delete on order_items
+for each row
+execute function triger_4();
+
+create or replace function triger_5()
+returns trigger as $$
+begin
+	insert into order_log(order_id, customer_id, action, log_date)
+	values(new.order_id, new.customer_id, 'ORDER_CREATED', current_timestamp);
+	return null;
+end;
+$$ language plpgsql;
+create trigger triger_5
+after insert on orders
+for each row
+execute function triger_5();
+
+
+insert into customers(full_name, email, balance)
+values('Anna', 'anna.tomchuk@gmail.com', 1000000.00);
+insert into products(product_name, price, stock_quantity)
+values('CARRR', '13000.00', 5);
+select*
+from customers;
+select *
+from products;
+call create_order(1);
+select*
+from orders
+where customer_id=1;
+select *
+from order_log;
+call add_product_to_order(1,1,2);
+select*
+from orders
+where order_id=1;
+select*
+from products
+where product_id=1;
+select*
+from order_items
+where order_id=1;
