@@ -34,3 +34,65 @@ create table order_log (
     action varchar(50),
     log_date timestamp default current_timestamp
 );
+
+create or replace function calculate_order_total(p_order_id int)
+returns numeric(10,2)
+language plpgsql
+as $$
+declare
+	total numeric(10,2);
+begin
+	select coalesce(sum(quantity*price),0)
+	into total
+	from order_items
+	where order_id=p_order_id;
+	return total;
+end;
+$$;
+
+create or replace procedure create_order(p_customer_id int)
+language plpgsql
+as $$
+declare
+	customer_exist boolean;
+begin
+	select exists(
+		select *
+		from customers
+		where customer_id=p_customer_id)
+		into customer_exist;
+	if customer_exist then
+		insert into orders(customer_id, order_date, total_amount)
+		values(p_customer_id, current_timestamp, 0.00);
+	else
+		null;
+	end if;
+end;
+$$;
+
+create or replace procedure add_product_to_order(p_order_id int, p_product_id int, p_quantity int)
+language plpgsql
+as $$
+declare
+	pr_price numeric(10,2);
+	pr_stock int;
+begin
+	if p_quantity<=0 then
+		null;
+	else
+			select price, stock_quantity
+			into pr_price, pr_stock
+			from products
+			where product_id=p_product_id;
+			if pr_stock>=p_quantity then
+				update products
+				set stock_quantity=stock_quantity-p_quantity
+				where product_id=p_product_id;
+				insert into order_items(order_id, product_id, quantity, price)
+				values(p_order_id, p_product_id, p_quantity, pr_price);
+			else
+				null;
+			end if;
+	end if;
+end;
+$$;
